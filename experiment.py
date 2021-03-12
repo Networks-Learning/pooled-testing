@@ -260,8 +260,6 @@ def testing(lambda_1, lambda_2, se, sp, N, r=2.5, k=3, p=0.2, method='negbin'):
 
 def gen_and_eval_nbinom(r, k, days, lambda_1, lambda_2, se, sp, seed, method):
 
-    print(seed) # This is to keep track of progress
-
     rng = np.random.default_rng(seed)
     
     N = generate_num_of_contacts(num_of_days=days, rng=rng, k=1.68, r=10.47)
@@ -335,7 +333,7 @@ def experiment(r, k, n, days, lambda_1, lambda_2, se, sp, method, seeds, njobs, 
 
     N = n # click doesn't accept upper case arguments
     p = None
- 
+
     if (n is None and days is None) or (n is not None and days is not None):
         print('Unclear experiment type')
     elif n is None and days is not None:
