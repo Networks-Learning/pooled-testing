@@ -5,9 +5,9 @@ methods=(individual dorfman negbin)
 lambdas_seq=$(seq 0 10)
 se=0.7
 sp=0.95
-r=0.6
-k=0.1
-seeds=100
+r=2.5
+k=0.2
+seeds=500
 njobs=20
 
 for lambdas in $lambdas_seq

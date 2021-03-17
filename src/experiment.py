@@ -278,7 +278,7 @@ def gen_and_eval_nbinom(r, k, days, lambda_1, lambda_2, se, sp, seed, method):
 
         score, num_of_tests, false_negatives, false_positives = evaluate_population(lambda_1, lambda_2, se, sp, is_infected, groups, rng)
 
-    return score, num_of_tests, false_negatives, false_positives, num_of_infected
+    return score, num_of_tests, false_negatives, false_positives, num_of_infected, N
 
 def gen_and_eval_fixed(N, r, k, lambda_1, lambda_2, se, sp, groups, seed):
 
@@ -290,9 +290,9 @@ def gen_and_eval_fixed(N, r, k, lambda_1, lambda_2, se, sp, groups, seed):
 
     score, num_of_tests, false_negatives, false_positives = evaluate_population(lambda_1, lambda_2, se, sp, is_infected, groups, rng)
 
-    return score, num_of_tests, false_negatives, false_positives, num_of_infected
+    return score, num_of_tests, false_negatives, false_positives, num_of_infected, N
 
-def generate_summary(lambda_1, lambda_2, se, sp, N, r, k, p, method, days, seed,
+def generate_summary(lambda_1, lambda_2, se, sp, individual_N, r, k, method, days, seed,
                         score, num_of_tests, false_negatives, false_positives, num_of_infected):
 
     summary = {}
@@ -303,16 +303,14 @@ def generate_summary(lambda_1, lambda_2, se, sp, N, r, k, p, method, days, seed,
     summary['r'] = str(r)
     summary['k'] = str(k)
     summary['method'] = method
-    summary['score'] = str(score)
-    summary['num_of_tests'] = str(num_of_tests)
-    summary['false_negatives'] = str(false_negatives)
-    summary['false_positives'] = str(false_positives)
-    summary['num_of_infected'] = str(num_of_infected)
+    summary['score'] = str(score[seed-1])
+    summary['num_of_tests'] = str(num_of_tests[seed-1])
+    summary['false_negatives'] = str(false_negatives[seed-1])
+    summary['false_positives'] = str(false_positives[seed-1])
+    summary['num_of_infected'] = str(num_of_infected[seed-1])
     summary['seed'] = str(seed)
-    if N is not None:
-        summary['N'] = str(N)
-        summary['p'] = str(p)
-    elif days is not None:
+    summary['N'] = str(individual_N[seed-1])
+    if days is not None:
         summary['days'] = str(days)
     
     return summary
@@ -357,11 +355,12 @@ def experiment(r, k, n, days, lambda_1, lambda_2, se, sp, method, seeds, njobs, 
     false_negatives = [x[2] for x in results]
     false_positives = [x[3] for x in results]
     num_of_infected = [x[4] for x in results]
+    individual_N = [x[5] for x in results]
 
     for seed in range(1,seeds+1):
-        summary = generate_summary(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, N=N, r=r, k=k, p=p, days=days, method=method,
-                                    score=score[seed-1], num_of_tests=num_of_tests[seed-1], false_negatives=false_negatives[seed-1],
-                                    false_positives=false_positives[seed-1], num_of_infected=num_of_infected[seed-1], seed=seed)
+        summary = generate_summary(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, individual_N=individual_N, r=r, k=k, days=days, method=method,
+                                    score=score, num_of_tests=num_of_tests, false_negatives=false_negatives,
+                                    false_positives=false_positives, num_of_infected=num_of_infected, seed=seed)
         
         with open('{output}_seed_{seed}.json'.format(output=output, seed=seed), 'w') as outfile:
             json.dump(summary, outfile)

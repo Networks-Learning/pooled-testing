@@ -7,8 +7,8 @@ lambda_2=0.33
 se=0.7
 sp=0.95
 r_seq=$(seq 0.5 0.25 3)
-k_seq=$(seq 0.05 0.05 0.5)
-seeds=100
+k_seq=$(seq 0.1 0.1 1.0)
+seeds=500
 njobs=20
 
 for r in $r_seq

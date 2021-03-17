@@ -6,9 +6,9 @@ lambda_1=0.33
 lambda_2=0.33
 se=0.7 # https://www.bmj.com/content/369/bmj.m1808
 sp=0.95 # https://www.bmj.com/content/369/bmj.m1808
-r=0.6 # Ok for now
-k=0.1 # Ok for now
-seeds=100
+r=2.5 # Ok for now
+k=0.2 # Ok for now
+seeds=500
 njobs=20
 
 for i in {0..5}
