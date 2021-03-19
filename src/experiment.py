@@ -30,7 +30,9 @@ def generate_num_of_contacts(num_of_days, rng, k=1.68, r=10.47):
 def generate_individual_contacts(N, r, k, rng):
     
     p = r/(k+r)
-    num_of_infections = min(N,nbinom.rvs(n=k, p=1-p, random_state=rng)) # min makes sure the infected are not more than N
+    num_of_infections = nbinom.rvs(n=k, p=1-p, random_state=rng) # Sample from a negative binomial
+    while num_of_infections > N:
+        num_of_infections = nbinom.rvs(n=k, p=1-p, random_state=rng) # Reject if it is larger than N
 
     is_infected = np.full(N, False)
     infection_ids = rng.choice(N, size=num_of_infections)
@@ -315,6 +317,18 @@ def generate_summary(lambda_1, lambda_2, se, sp, individual_N, r, k, method, day
     
     return summary
 
+# r = 2.5 # THIS IS ONLY FOR DEBUGGING
+# k = 0.2
+# n = 10
+# lambda_1 = 0.33
+# lambda_2 = 0.33
+# se = 0.7
+# sp = 0.95
+# method = 'dorfman'
+# seeds = 10
+# njobs = 1
+# output = 'test'
+# days = None
 @click.command()
 @click.option('--r', type=float, default=2.0, help="Reproductive rate")
 @click.option('--k', type=float, default=2.0, help="Dispersion")
@@ -338,7 +352,7 @@ def experiment(r, k, n, days, lambda_1, lambda_2, se, sp, method, seeds, njobs, 
     elif n is None and days is not None:
         print('Starting varying N ' + method + ' experiment')
         results = Parallel(n_jobs=njobs, backend='multiprocessing')(delayed(gen_and_eval_nbinom)(r, k, days, lambda_1, lambda_2, se, sp, seed, method) for seed in range(1, seeds+1))
-    
+
     elif n is not None and days is None:
         print('Starting fixed N ' + method + ' experiment')
         p = r/N
