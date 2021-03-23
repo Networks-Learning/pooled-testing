@@ -211,16 +211,18 @@ def group_score(size, lambda_1, lambda_2, se, sp, r, k, N, p, method='negbin'):
         
         inner_sums = compute_inner_sums(size, r, k, N)
 
-        score = lambda_1 * negbin_false_negatives(size, se, sp, r, k, N, inner_sums) + \
-                lambda_2 * negbin_false_positives(size, se, sp, r, k, N, inner_sums) + \
-                (1 - lambda_1 - lambda_2) * negbin_num_of_tests(size, se, sp, inner_sums)
+        false_negatives = negbin_false_negatives(size, se, sp, r, k, N, inner_sums)
+        false_positives = negbin_false_positives(size, se, sp, r, k, N, inner_sums)
+        num_of_tests = negbin_num_of_tests(size, se, sp, inner_sums)
     
     elif method == 'dorfman':
-        score = lambda_1 * dorfman_false_negatives(size, se, sp, p) + \
-                lambda_2 * dorfman_false_positives(size, se, sp, p) + \
-                (1 - lambda_1 - lambda_2) * dorfman_num_of_tests(size, se, sp, p)
+        false_negatives = dorfman_false_negatives(size, se, sp, p)
+        false_positives = dorfman_false_positives(size, se, sp, p)
+        num_of_tests = dorfman_num_of_tests(size, se, sp, p)
     
-    return score
+    score = lambda_1*false_negatives + lambda_2*false_positives + (1-lambda_1-lambda_2)*num_of_tests
+    
+    return score, false_negatives, false_positives, num_of_tests
 
 
 def testing(lambda_1, lambda_2, se, sp, N, r=2.5, k=3, p=0.2, method='negbin'):
@@ -231,12 +233,18 @@ def testing(lambda_1, lambda_2, se, sp, N, r=2.5, k=3, p=0.2, method='negbin'):
     
     # Precompute the objective value for all group sizes
     g_fun = np.zeros(N)
+    fn_fun = np.zeros(N)
+    fp_fun = np.zeros(N)
+    tests_fun = np.zeros(N)
     for size in range(1, N+1):
-        g_fun[size-1] = group_score(size, lambda_1, lambda_2, se, sp, r, k, N, p, method=method)
+        g_fun[size-1], fn_fun[size-1], fp_fun[size-1], tests_fun[size-1] = group_score(size, lambda_1, lambda_2, se, sp, r, k, N, p, method=method)
 
     # Dynamic programming
     h_fun = np.zeros(N+1)
     splittings = np.zeros(N+1, dtype=int)
+    fn_total = np.zeros(N+1)
+    fp_total = np.zeros(N+1)
+    tests_total = np.zeros(N+1)
     for i in range(1, N+1):
         
         min_val = 3*N
@@ -248,6 +256,9 @@ def testing(lambda_1, lambda_2, se, sp, N, r=2.5, k=3, p=0.2, method='negbin'):
 
         h_fun[i] = min_val
         splittings[i] = min_splitting
+        fn_total[i] = fn_fun[min_splitting-1] + fn_total[i-min_splitting]
+        fp_total[i] = fp_fun[min_splitting-1] + fp_total[i-min_splitting]
+        tests_total[i] = tests_fun[min_splitting-1] + tests_total[i-min_splitting]
 
     groups = []
     grouped = 0
@@ -258,7 +269,7 @@ def testing(lambda_1, lambda_2, se, sp, N, r=2.5, k=3, p=0.2, method='negbin'):
         groups.append(next_group_id)
         grouped += next_group_id
 
-    return groups
+    return groups, fn_total[N], fp_total[N], tests_total[N]
 
 def gen_and_eval_nbinom(r, k, days, lambda_1, lambda_2, se, sp, seed, method):
 
@@ -271,7 +282,7 @@ def gen_and_eval_nbinom(r, k, days, lambda_1, lambda_2, se, sp, seed, method):
     else:
         if method != 'individual':
             p = r/N
-            groups = testing(lambda_1, lambda_2, se, sp, N, r=r, k=k, p=p, method=method)
+            groups, _, _, _ = testing(lambda_1, lambda_2, se, sp, N, r=r, k=k, p=p, method=method)
         else:
             groups = list(np.full(N,1,dtype=int))
 
@@ -358,9 +369,10 @@ def experiment(r, k, n, days, lambda_1, lambda_2, se, sp, method, seeds, njobs, 
         p = r/N
         
         if method != 'individual':
-            groups = testing(lambda_1, lambda_2, se, sp, N, r=r, k=k, p=p, method=method)
+            groups, exp_fn, exp_fp, exp_tests = testing(lambda_1, lambda_2, se, sp, N, r=r, k=k, p=p, method=method)
+            print(lambda_1*exp_fn + lambda_2*exp_fp + (1-lambda_1-lambda_2)*exp_tests, exp_fn, exp_fp, exp_tests)
         else:
-            groups = list(np.full(N,1,dtype=int))
+            groups, exp_fn, exp_fp, exp_tests = (list(np.full(N,1,dtype=int)), None, None, None) # Expected numbers left undefined for individual testing
         
         results = Parallel(n_jobs=njobs, backend='multiprocessing')(delayed(gen_and_eval_fixed)(N, r, k, lambda_1, lambda_2, se, sp, groups, seed) for seed in range(1, seeds+1))
 
@@ -371,6 +383,7 @@ def experiment(r, k, n, days, lambda_1, lambda_2, se, sp, method, seeds, njobs, 
     num_of_infected = [x[4] for x in results]
     individual_N = [x[5] for x in results]
 
+    print(np.mean(score), np.mean(false_negatives), np.mean(false_positives), np.mean(num_of_tests))
     for seed in range(1,seeds+1):
         summary = generate_summary(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, individual_N=individual_N, r=r, k=k, days=days, method=method,
                                     score=score, num_of_tests=num_of_tests, false_negatives=false_negatives,
@@ -379,7 +392,6 @@ def experiment(r, k, n, days, lambda_1, lambda_2, se, sp, method, seeds, njobs, 
         with open('{output}_seed_{seed}.json'.format(output=output, seed=seed), 'w') as outfile:
             json.dump(summary, outfile)
 
-    print(np.mean(score))
     return
 
 
