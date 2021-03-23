@@ -6,15 +6,15 @@ lambda_1=0.3
 lambda_2=0.2
 se=0.7
 sp=0.95
-r_seq=$(seq 0.5 0.5 3)
+r_seq=(0.5 1.0 1.5 2.0 2.5 3.0)
 k_seq=(0.1 1.0 10.0 100.0 1000.0 10000.0)
-# k_seq=$(seq 0.1 0.1 1.0)
 seeds=1000
 njobs=45
 
-for r in $r_seq
+for z in {0..5}
 do
-    for i in {0..9}
+    r=${r_seq[$z]}
+    for i in {0..5}
     do
         k=${k_seq[$i]}
         for j in {0..2}
