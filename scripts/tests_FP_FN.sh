@@ -7,8 +7,8 @@ se=0.7
 sp=0.95
 r=2.5
 k=0.2
-seeds=500
-njobs=20
+seeds=1000
+njobs=40
 
 for lambdas in $lambdas_seq
 do

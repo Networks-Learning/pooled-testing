@@ -2,13 +2,13 @@
 
 N=(5 10 20 50 100 200)
 methods=(individual dorfman negbin)
-lambda_1=0.33
-lambda_2=0.33
+lambda_1=0.3
+lambda_2=0.2
 se=0.7 # https://www.bmj.com/content/369/bmj.m1808
 sp=0.95 # https://www.bmj.com/content/369/bmj.m1808
 r=2.5 # Ok for now
 k=0.2 # Ok for now
-seeds=500
+seeds=1000
 njobs=20
 
 for i in {0..5}
