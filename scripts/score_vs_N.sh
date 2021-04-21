@@ -7,7 +7,7 @@ sp=0.95 # https://www.bmj.com/content/369/bmj.m1808
 r=2.5
 k=0.2
 seeds=1000
-njobs=2
+njobs=40
 
 # Optimizing FNs
 lambda_1=1.0

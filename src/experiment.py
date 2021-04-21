@@ -384,7 +384,8 @@ def experiment(r, k, n, days, lambda_1, lambda_2, se, sp, method, seeds, njobs, 
     num_of_infected = [x[4] for x in results]
     individual_N = [x[5] for x in results]
 
-    print(np.mean(score), np.mean(false_negatives), np.mean(false_positives), np.mean(num_of_tests), np.mean(groups))
+    print('Score: ' + str(np.mean(score)) + ' | FNs: ' + str(np.mean(false_negatives)) + ' | FPs: ' + str(np.mean(false_positives)) +\
+            ' | Tests: ' + str(np.mean(num_of_tests)) + ' | Infected: ' + str(np.mean(num_of_infected)) + ' | Group size: ' + str(np.mean(groups)))
     for seed in range(1,seeds+1):
         summary = generate_summary(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, individual_N=individual_N, r=r, k=k, days=days, method=method,
                                     score=score, num_of_tests=num_of_tests, false_negatives=false_negatives, false_positives=false_positives,
