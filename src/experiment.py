@@ -305,7 +305,7 @@ def gen_and_eval_fixed(N, r, k, lambda_1, lambda_2, se, sp, groups, seed):
 
     return score, num_of_tests, false_negatives, false_positives, num_of_infected, N
 
-def generate_summary(lambda_1, lambda_2, se, sp, individual_N, r, k, method, days, seed,
+def generate_summary(lambda_1, lambda_2, se, sp, individual_N, r, k, method, days, seed, group_size,
                         score, num_of_tests, false_negatives, false_positives, num_of_infected):
 
     summary = {}
@@ -315,6 +315,7 @@ def generate_summary(lambda_1, lambda_2, se, sp, individual_N, r, k, method, day
     summary['sp'] = str(sp)
     summary['r'] = str(r)
     summary['k'] = str(k)
+    summary['group_size'] = str(group_size)
     summary['method'] = method
     summary['score'] = str(score[seed-1])
     summary['num_of_tests'] = str(num_of_tests[seed-1])
@@ -370,7 +371,7 @@ def experiment(r, k, n, days, lambda_1, lambda_2, se, sp, method, seeds, njobs, 
         
         if method != 'individual':
             groups, exp_fn, exp_fp, exp_tests = testing(lambda_1, lambda_2, se, sp, N, r=r, k=k, p=p, method=method)
-            print(lambda_1*exp_fn + lambda_2*exp_fp + (1-lambda_1-lambda_2)*exp_tests, exp_fn, exp_fp, exp_tests)
+            # print(lambda_1*exp_fn + lambda_2*exp_fp + (1-lambda_1-lambda_2)*exp_tests, exp_fn, exp_fp, exp_tests)
         else:
             groups, exp_fn, exp_fp, exp_tests = (list(np.full(N,1,dtype=int)), None, None, None) # Expected numbers left undefined for individual testing
         
@@ -383,11 +384,11 @@ def experiment(r, k, n, days, lambda_1, lambda_2, se, sp, method, seeds, njobs, 
     num_of_infected = [x[4] for x in results]
     individual_N = [x[5] for x in results]
 
-    print(np.mean(score), np.mean(false_negatives), np.mean(false_positives), np.mean(num_of_tests))
+    print(np.mean(score), np.mean(false_negatives), np.mean(false_positives), np.mean(num_of_tests), np.mean(groups))
     for seed in range(1,seeds+1):
         summary = generate_summary(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, individual_N=individual_N, r=r, k=k, days=days, method=method,
-                                    score=score, num_of_tests=num_of_tests, false_negatives=false_negatives,
-                                    false_positives=false_positives, num_of_infected=num_of_infected, seed=seed)
+                                    score=score, num_of_tests=num_of_tests, false_negatives=false_negatives, false_positives=false_positives,
+                                    group_size=np.mean(groups), num_of_infected=num_of_infected, seed=seed)
         
         with open('{output}_seed_{seed}.json'.format(output=output, seed=seed), 'w') as outfile:
             json.dump(summary, outfile)
