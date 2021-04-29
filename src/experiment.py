@@ -1,33 +1,12 @@
 import numpy as np
 from scipy.special import comb
-from scipy.stats import nbinom, binom
+from scipy.stats import nbinom, binom, bernoulli, poisson
 import click
 from joblib import Parallel, delayed
 import json
 import multiprocessing as mp
-
-def generate_num_of_contacts(num_of_days, rng, k=1.68, r=10.47):
-
-    p = r/(k+r)
-
-    home_contacts = 2.197
-    work_contacts = 2.909
-    school_contacts = 1.181
-    other_contacts = 3.343
-
-    overall_contacts = home_contacts + work_contacts + school_contacts + other_contacts
-    p_repetitive_contact = (home_contacts + work_contacts + school_contacts)/overall_contacts
-
-    daily_contacts = nbinom.rvs(n=k, p=1-p, random_state=rng)
     
-    final_contacts = 0
-    same_per_day = binom.rvs(n=daily_contacts, p=p_repetitive_contact, random_state=rng)
-    new_per_day = daily_contacts - same_per_day
-    final_contacts = same_per_day + new_per_day * num_of_days
-
-    return final_contacts
-    
-def generate_individual_contacts(N, r, k, rng):
+def generate_infected_contacts(N, r, k, rng):
     
     p = r/(k+r)
     num_of_infections = nbinom.rvs(n=k, p=1-p, random_state=rng) # Sample from a negative binomial
@@ -35,9 +14,9 @@ def generate_individual_contacts(N, r, k, rng):
         num_of_infections = nbinom.rvs(n=k, p=1-p, random_state=rng) # Reject if it is larger than N
 
     is_infected = np.full(N, False)
-    infection_ids = rng.choice(N, size=num_of_infections)
+    infection_ids = rng.choice(N, size=num_of_infections, replace=False)
     is_infected[infection_ids] = True
-
+ 
     return is_infected
 
 def evaluate_population(lambda_1, lambda_2, se, sp, is_infected, groups, rng):
