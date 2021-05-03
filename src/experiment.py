@@ -10,6 +10,7 @@ def generate_infected_contacts(N, r, k, rng):
     
     p = r/(k+r)
     num_of_infections = nbinom.rvs(n=k, p=1-p, random_state=rng) # Sample from a negative binomial
+
     while num_of_infections > N:
         num_of_infections = nbinom.rvs(n=k, p=1-p, random_state=rng) # Reject if it is larger than N
 
@@ -29,9 +30,12 @@ def evaluate_population(lambda_1, lambda_2, se, sp, is_infected, groups, rng):
     for group_size in groups:
         
         if group_size == 1:
+            # Individual testing
             group_tests = 1
+
             if is_infected[examined]:
                 if rng.binomial(1, se)==0:
+                    # False negative
                     group_false_negatives = 1
                     group_false_positives = 0    
                 else:
@@ -39,6 +43,7 @@ def evaluate_population(lambda_1, lambda_2, se, sp, is_infected, groups, rng):
                     group_false_positives = 0
             else:
                 if rng.binomial(1, sp)==0:
+                    # False positive
                     group_false_negatives = 0
                     group_false_positives = 1
                 else:
@@ -46,11 +51,11 @@ def evaluate_population(lambda_1, lambda_2, se, sp, is_infected, groups, rng):
                     group_false_positives = 0
 
         elif group_size > 1:
-
+            # Group testing
             group_is_infected = is_infected[examined : examined+group_size]
             num_of_infected = np.sum(group_is_infected)
 
-            if rng.binomial(num_of_infected, se)>0 or rng.binomial(group_size - num_of_infected, 1-sp)>0:
+            if (num_of_infected > 0 and rng.binomial(1, se)==1) or (num_of_infected == 0 and rng.binomial(1, sp)==0):
             # Group test positive
                 group_tests = 1+group_size
                 group_false_negatives = rng.binomial(num_of_infected, 1-se)
@@ -113,14 +118,14 @@ def compute_num_of_tests(size, se, sp, method, inner_sums=None, p_bernoulli=None
         elif size>1:
 
             double_sum = np.longdouble(0)
-            for s in range(0, size+1):
-                double_sum += (1-se)**s * sp**(size-s) * inner_sums[s]
+            for s in range(1, size+1):
+                double_sum += (1-se) * inner_sums[s]
 
             assert double_sum>=0 and double_sum<=1, "Double sum out of bounds"
-            result = 1 + size*(1-double_sum)
+            result = 1 + size*(1 - double_sum - sp*inner_sums[0])
 
     elif method=='binomial':
-        # TODO: Change these expressions considering alternative group test expression
+         
         if size==1:
             result = 1
         
@@ -145,12 +150,12 @@ def compute_false_negatives(size, se, sp, method, r=None, k=None, N=None, inner_
 
             double_sum = np.longdouble(0)
             for s in range(1, size+1):
-                double_sum += inner_sums[s] * s * (1 - se*(1 - (1-se)**s * sp**(size-s)))
+                double_sum += s * (1-se**2) * inner_sums[s]
 
             result = double_sum
 
     elif method=='binomial':
-        # TODO: Change these expressions considering alternative group test expression
+
         if size==1:
             result = (1-se) * p_bernoulli
 
@@ -175,13 +180,13 @@ def compute_false_positives(size, se, sp, method, r=None, k=None, N=None, inner_
         elif size>1:
 
             double_sum = np.longdouble(0)
-            for s in range(0, size):
-                double_sum += (1 - (1-se)**s * sp**(size-s)) * inner_sums[s] * (size-s) * (1-sp)
+            for s in range(1, size):
+                double_sum += se * (size-s) * (1-sp) * inner_sums[s]
 
-            result = double_sum
+            result = (1-sp)**2 * size * inner_sums[0] + double_sum
 
     elif method == 'binomial':
-        # TODO: Change these expressions considering alternative group test expression
+
         if size==1:
             result = (1-sp) * (1-p_bernoulli)
 
@@ -190,6 +195,8 @@ def compute_false_positives(size, se, sp, method, r=None, k=None, N=None, inner_
 
     return result
 
+# Computes the expected tests, expected false negatives & expected false positives
+# for a given group size
 def group_score(size, lambda_1, lambda_2, se, sp, method, r=None, k=None, N=None, p_bernoulli=None):
 
     if method == 'negbin' or method == 'poisson':
@@ -205,7 +212,7 @@ def group_score(size, lambda_1, lambda_2, se, sp, method, r=None, k=None, N=None
     
     return score, expected_false_negatives, expected_false_positives, expected_num_of_tests
 
-
+# Dynamic programming algorithm to split individuals into groups
 def testing(lambda_1, lambda_2, se, sp, N, method, r=None, k=None, p_bernoulli=None):
 
     if (method != 'negbin') and (method != 'binomial') and (method != 'poisson'):
@@ -254,6 +261,8 @@ def testing(lambda_1, lambda_2, se, sp, N, method, r=None, k=None, p_bernoulli=N
 
     return groups, fn_total[N], fp_total[N], tests_total[N]
 
+# Generates infected contacts, performs testing based on the given group sizes
+# and returns the number of tests, false negatives and false positives
 def gen_and_eval_fixed(N, r, k, lambda_1, lambda_2, se, sp, groups, seed):
 
     rng = np.random.default_rng(seed)
@@ -266,6 +275,7 @@ def gen_and_eval_fixed(N, r, k, lambda_1, lambda_2, se, sp, groups, seed):
 
     return score, num_of_tests, false_negatives, false_positives, num_of_infected
 
+# Saves configuration and results to a JSON file
 def generate_summary(lambda_1, lambda_2, se, sp, N, r, k, method, seeds, avg_group_size,
                         exp_fn, exp_fp, exp_tests,
                         score, num_of_tests, false_negatives, false_positives, num_of_infected):
@@ -294,37 +304,88 @@ def generate_summary(lambda_1, lambda_2, se, sp, N, r, k, method, seeds, avg_gro
      
     return summary
 
-r = 0.5 # THIS IS ONLY FOR DEBUGGING
-k = 0.2
-n = 100
-lambda_1 = 0.0
-lambda_2 = 0.0
-se = 0.7
-sp = 0.95
-method = 'negbin'
-seeds = 100000
-njobs = 1
-output = 'outputs/test'
+@click.command() # Comment the click commands for testing
+@click.option('--r', type=float, required=True, help="Reproductive rate")
+@click.option('--k', type=float, required=True, help="Dispersion")
+@click.option('--n', type=int, required=True, help="Number of contacts")
+@click.option('--lambda_1', type=float, required=True, help="False Negative weight")
+@click.option('--lambda_2', type=float, required=True, help="False Positive weight")
+@click.option('--se', type=np.longdouble, required=True, help="Test Sensitivity")
+@click.option('--sp', type=np.longdouble, required=True, help="Test Specificity")
+@click.option('--method', type=str, required=True, help="Grouping method")
+@click.option('--seeds', type=int, required=True, help="Number of contacts sets to be tested")
+@click.option('--njobs', type=int, required=True, help="Number of parallel threads")
+@click.option('--output', type=str, required=True, help="Output file name")
+def experiment(r, k, n, lambda_1, lambda_2, se, sp, method, seeds, njobs, output):
 
-# @click.command()
-# @click.option('--r', type=float, required=True, help="Reproductive rate")
-# @click.option('--k', type=float, required=True, help="Dispersion")
-# @click.option('--n', type=int, required=True, help="Number of contacts")
-# @click.option('--lambda_1', type=float, required=True, help="False Negative weight")
-# @click.option('--lambda_2', type=float, required=True, help="False Positive weight")
-# @click.option('--se', type=np.longdouble, required=True, help="Test Sensitivity")
-# @click.option('--sp', type=np.longdouble, required=True, help="Test Specificity")
-# @click.option('--method', type=str, required=True, help="Grouping method")
-# @click.option('--seeds', type=int, required=True, help="Number of contacts sets to be tested")
-# @click.option('--njobs', type=int, required=True, help="Number of parallel threads")
-# @click.option('--output', type=str, required=True, help="Output file name")
-# def experiment(r, k, n, lambda_1, lambda_2, se, sp, method, seeds, njobs, output):
+    N = n # click doesn't accept upper case arguments
 
-N = n # click doesn't accept upper case arguments
+    if method=='binomial':
+        
+        # Estimate the equivalent probability of infection for the Binomial
+        effective_infected = []
+        for seed in range(1, seeds+1):
+            rng = np.random.default_rng(seed)
+            num_of_infections = nbinom.rvs(n=k, p=1-(r/(k+r)), random_state=rng) # Sample from a negative binomial
+            while num_of_infections > N:
+                num_of_infections = nbinom.rvs(n=k, p=1-(r/(k+r)), random_state=rng) # Reject if it is larger than N
+            effective_infected.append(num_of_infections)
 
-# Estimate the equivalent probability of infection for the Binomial
-if method=='binomial':
+        effective_mean = np.mean(effective_infected)
+        p_bernoulli = effective_mean/N
+
+        print('Computing optimal groups under ' + method + ' assumption...')
+        groups, exp_fn, exp_fp, exp_tests = testing(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, N=N, method=method, p_bernoulli=p_bernoulli)
+
+    elif method == 'individual':
+
+        print('Computing optimal groups under ' + method + ' assumption...')
+        groups, exp_fn, exp_fp, exp_tests = (list(np.full(N,1,dtype=int)), None, None, None) # Expected numbers left undefined for individual testing
+
+    else:
+
+        print('Computing optimal groups under ' + method + ' assumption...')
+        groups, exp_fn, exp_fp, exp_tests = testing(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, N=N, r=r, k=k, method=method)
+
+    print('Evaluating...')
+    results = Parallel(n_jobs=njobs, backend='multiprocessing')(delayed(gen_and_eval_fixed)(N, r, k, lambda_1, lambda_2, se, sp, groups, seed) for seed in range(1, seeds+1))
+
+    score = [x[0] for x in results]
+    num_of_tests = [x[1] for x in results]
+    false_negatives = [x[2] for x in results]
+    false_positives = [x[3] for x in results]
+    num_of_infected = [x[4] for x in results]
+    avg_group_size = np.mean(groups)
+
+    print('Saving results...')
+    summary = generate_summary(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, N=N, r=r, k=k, method=method,
+                                exp_fn=exp_fn, exp_fp=exp_fp, exp_tests=exp_tests,
+                                score=score, num_of_tests=num_of_tests, false_negatives=false_negatives, false_positives=false_positives,
+                                avg_group_size=avg_group_size, num_of_infected=num_of_infected, seeds=seeds)
+        
+    with open('{output}.json'.format(output=output), 'w') as outfile:
+        json.dump(summary, outfile)
+
+    return
+
+# Temporary function to compare the q-values of Poisson and Negative Binomial 
+def testing_q_values(N, r, k):
     
+    poisson_q_values = []
+    negbin_q_values = []
+    for n in range(0, N+1):
+        poisson_q_values.append(compute_q_value(n=n, r=r, N=N, method='poisson'))
+        negbin_q_values.append(compute_q_value(n=n, r=r, k=k, N=N, method='negbin'))
+
+    print(poisson_q_values)
+    print(negbin_q_values)  
+    return
+    
+# Temporary function to compare the expected number of tests, FNs and FPs of Poisson and Negative Binomial
+def testing_exp_values(N, r, k, lambda_1, lambda_2, se, sp, seeds):
+
+    results={}
+
     effective_infected = []
     for seed in range(1, seeds+1):
         rng = np.random.default_rng(seed)
@@ -336,39 +397,21 @@ if method=='binomial':
     effective_mean = np.mean(effective_infected)
     p_bernoulli = effective_mean/N
 
-    print('Starting fixed N ' + method + ' experiment.')
-    groups, exp_fn, exp_fp, exp_tests = testing(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, N=N, method=method, p_bernoulli=p_bernoulli)
+    for method in ['binomial', 'negbin']:
+        
+        results[method] = (np.zeros(N), np.zeros(N), np.zeros(N), np.zeros(N))
+        for size in range(1, N+1):
 
-elif method == 'individual':
+            results[method][0][size-1], results[method][1][size-1], results[method][2][size-1], results[method][3][size-1] = \
+                group_score(size=size, lambda_1=lambda_1, lambda_2=lambda_2,
+                            se=se, sp=sp, r=r, k=k, N=N, p_bernoulli=p_bernoulli, method=method)
 
-    print('Starting fixed N ' + method + ' experiment.')
-    groups, exp_fn, exp_fp, exp_tests = (list(np.full(N,1,dtype=int)), None, None, None) # Expected numbers left undefined for individual testing
+    print(results)
+    return
 
-else:
-
-    print('Starting fixed N ' + method + ' experiment.')
-    groups, exp_fn, exp_fp, exp_tests = testing(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, N=N, r=r, k=k, method=method)
-
-print('hahua')
-results = Parallel(n_jobs=njobs, backend='multiprocessing')(delayed(gen_and_eval_fixed)(N, r, k, lambda_1, lambda_2, se, sp, groups, seed) for seed in range(1, seeds+1))
-
-score = [x[0] for x in results]
-num_of_tests = [x[1] for x in results]
-false_negatives = [x[2] for x in results]
-false_positives = [x[3] for x in results]
-num_of_infected = [x[4] for x in results]
-avg_group_size = np.mean(groups)
-
-summary = generate_summary(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, N=N, r=r, k=k, method=method,
-                            exp_fn=exp_fn, exp_fp=exp_fp, exp_tests=exp_tests,
-                            score=score, num_of_tests=num_of_tests, false_negatives=false_negatives, false_positives=false_positives,
-                            avg_group_size=avg_group_size, num_of_infected=num_of_infected, seeds=seeds)
-    
-with open('{output}.json'.format(output=output), 'w') as outfile:
-    json.dump(summary, outfile)
-
-# return
-
-
-# if __name__ == '__main__':
-#     experiment()
+if __name__ == '__main__':
+    experiment()
+    # testing_q_values(N=100, r=2.5, k=0.2)
+    # testing_exp_values(N=100, r=2.5, k=0.2, lambda_1=0.0, lambda_2=0.0, se=0.95, sp=0.95, seeds=100000)
+    # experiment(r = 2.5, k = 0.2, n = 100, lambda_1 = 0.0, lambda_2 = 0.0, sp = 0.95, se = 0.7,
+                # method = 'binomial', seeds = 100000, njobs = 1, output = 'outputs/test')
