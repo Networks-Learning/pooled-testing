@@ -5,3 +5,4 @@ numpy
 click
 pandas
 scipy
+joblib
