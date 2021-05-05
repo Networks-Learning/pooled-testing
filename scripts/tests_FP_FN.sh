@@ -3,8 +3,8 @@
 methods=(binomial negbin)
 lambdas_seq=$(seq 0 10)
 N=100
-se_seq=(0.7 0.8 0.9 1.0)
-sp_seq=(0.7 0.8 0.9 1.0)
+se_seq=(0.75 0.95)
+sp_seq=(0.75 0.95)
 r_seq=(0.5 2.5)
 k_seq=(0.1 0.2)
 seeds=100000
@@ -14,10 +14,10 @@ for i in {0..1}
 do
     r=${r_seq[$i]}
     k=${k_seq[$i]}
-    for z in {0..3}
+    for z in {0..1}
     do
         se=${se_seq[$z]}
-        for v in {0..3}
+        for v in {0..1}
         do
             sp=${sp_seq[$v]}
             for lambdas in $lambdas_seq
