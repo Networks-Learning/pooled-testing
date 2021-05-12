@@ -276,7 +276,7 @@ def gen_and_eval_fixed(N, r, k, lambda_1, lambda_2, se, sp, groups, seed):
     return score, num_of_tests, false_negatives, false_positives, num_of_infected
 
 # Saves configuration and results to a JSON file
-def generate_summary(lambda_1, lambda_2, se, sp, N, r, k, method, seeds, avg_group_size,
+def generate_summary(lambda_1, lambda_2, se, sp, N, r, k, method, seeds, groups,
                         exp_fn, exp_fp, exp_tests,
                         score, num_of_tests, false_negatives, false_positives, num_of_infected):
 
@@ -288,12 +288,16 @@ def generate_summary(lambda_1, lambda_2, se, sp, N, r, k, method, seeds, avg_gro
     summary['r'] = str(r)
     summary['k'] = str(k)
     summary['method'] = method
-    summary['N'] = N
+    summary['N'] = str(N)
+    summary['exp_fn'] = str(exp_fn)
+    summary['exp_fp'] = str(exp_fp)
+    summary['exp_tests'] = str(exp_tests)
+    
+    summary['groups'] = {}
+    for ind, group_size in enumerate(groups):
+        summary['groups'][ind+1] = str(group_size)
+    
     summary['seeds'] = {}
-    summary['exp_fn'] = exp_fn
-    summary['exp_fp'] = exp_fp
-    summary['exp_tests'] = exp_tests
-    summary['avg_group_size'] = avg_group_size
     for seed in range(1, seeds+1):
         summary['seeds'][seed] = {}
         summary['seeds'][seed]['score'] = str(score[seed-1])
@@ -355,13 +359,12 @@ def experiment(r, k, n, lambda_1, lambda_2, se, sp, method, seeds, njobs, output
     false_negatives = [x[2] for x in results]
     false_positives = [x[3] for x in results]
     num_of_infected = [x[4] for x in results]
-    avg_group_size = np.mean(groups)
 
     print('Saving results...')
     summary = generate_summary(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, N=N, r=r, k=k, method=method,
                                 exp_fn=exp_fn, exp_fp=exp_fp, exp_tests=exp_tests,
                                 score=score, num_of_tests=num_of_tests, false_negatives=false_negatives, false_positives=false_positives,
-                                avg_group_size=avg_group_size, num_of_infected=num_of_infected, seeds=seeds)
+                                groups=groups, num_of_infected=num_of_infected, seeds=seeds)
         
     with open('{output}.json'.format(output=output), 'w') as outfile:
         json.dump(summary, outfile)
