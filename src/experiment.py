@@ -71,7 +71,7 @@ def evaluate_population(lambda_1, lambda_2, se, sp, is_infected, groups, rng):
         false_positives += group_false_positives
         examined += group_size
     
-    score = lambda_1 * false_negatives + lambda_2 * false_positives + (1 - lambda_1 - lambda_2) * num_of_tests
+    score = num_of_tests + lambda_1 * false_negatives + lambda_2 * false_positives
 
     return score, num_of_tests, false_negatives, false_positives
 
@@ -208,7 +208,7 @@ def group_score(size, lambda_1, lambda_2, se, sp, method, r=None, k=None, N=None
     expected_false_positives = compute_false_positives(size=size, se=se, sp=sp, r=r, k=k, N=N, inner_sums=inner_sums, p_bernoulli=p_bernoulli, method=method)
     expected_num_of_tests = compute_num_of_tests(size=size, se=se, sp=sp, inner_sums=inner_sums, p_bernoulli=p_bernoulli, method=method)
     
-    score = lambda_1*expected_false_negatives + lambda_2*expected_false_positives + (1-lambda_1-lambda_2)*expected_num_of_tests
+    score =  expected_num_of_tests + lambda_1*expected_false_negatives + lambda_2*expected_false_positives
     
     return score, expected_false_negatives, expected_false_positives, expected_num_of_tests
 
@@ -416,5 +416,5 @@ if __name__ == '__main__':
     experiment()
     # testing_q_values(N=100, r=2.5, k=0.2)
     # testing_exp_values(N=100, r=2.5, k=0.2, lambda_1=0.0, lambda_2=0.0, se=0.95, sp=0.95, seeds=100000)
-    # experiment(r = 2.5, k = 0.2, n = 100, lambda_1 = 0.0, lambda_2 = 0.0, sp = 0.95, se = 0.7,
-                # method = 'binomial', seeds = 100000, njobs = 1, output = 'outputs/test')
+    # experiment(r = 2.5, k = 0.1, n = 50, lambda_1 = 1.8, lambda_2 = 1.6, sp = 0.95, se = 0.95,
+                # method = 'negbin', seeds = 100000, njobs = 1, output = 'outputs/test')
