@@ -2,8 +2,41 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 
+def get_fig_dim(width, fraction=1):
+    """Set figure dimensions to avoid scaling in LaTeX.
 
-def latexify(fig_width=None, fig_height=None, columns=1, largeFonts=False, font_scale=1):
+    Parameters
+    ----------
+    width: float
+            Document textwidth or columnwidth in pts
+    fraction: float, optional
+            Fraction of the width which you wish the figure to occupy
+
+    Returns
+    -------
+    fig_dim: tuple
+            Dimensions of figure in inches
+    """
+    # Width of figure (in pts)
+    fig_width_pt = width * fraction
+
+    # Convert from pt to inches
+    inches_per_pt = 1 / 72.27
+
+    # Golden ratio to set aesthetic figure height
+    golden_ratio = (1 + 5**.5) / 2
+
+    # Figure width in inches
+    fig_width_in = fig_width_pt * inches_per_pt
+    # Figure height in inches
+    fig_height_in = fig_width_in / golden_ratio
+
+    fig_dim = (fig_height_in, golden_ratio)
+
+    return fig_dim
+
+
+def latexify(font_size=10, legend_font_size=9):
     """Set up matplotlib's RC params for LaTeX plotting.
     Call this before plotting a figure.
 
@@ -16,46 +49,38 @@ def latexify(fig_width=None, fig_height=None, columns=1, largeFonts=False, font_
 
     # code adapted from http://www.scipy.org/Cookbook/Matplotlib/LaTeX_Examples
 
-    # Width and max height in inches for IEEE journals taken from
-    # computer.org/cms/Computer.org/Journal%20templates/transactions_art_guide.pdf
-
-    assert(columns in [1, 2])
-
-    if fig_width is None:
-        fig_width = 3.39 if columns == 1 else 6.9  # width in inches
-
-    if fig_height is None:
-        golden_mean = (np.sqrt(5) - 1.0) / 2.0    # Aesthetic ratio
-        fig_height = fig_width * golden_mean  # height in inches
-
-    MAX_HEIGHT_INCHES = 8.0
-    if fig_height > MAX_HEIGHT_INCHES:
-        print("WARNING: fig_height too large:" + str(fig_height) +
-              "so will reduce to" + str(MAX_HEIGHT_INCHES) + "inches.")
-        fig_height = MAX_HEIGHT_INCHES
-
     params = {'backend': 'ps',
               'text.latex.preamble': '\\usepackage{gensymb} \\usepackage{bm}',
               # fontsize for x and y labels (was 10)
-              'axes.labelsize': font_scale * 10 if largeFonts else font_scale * 7,
-              'axes.titlesize': font_scale * 10 if largeFonts else font_scale * 7,
-              'font.size': font_scale * 10 if largeFonts else font_scale * 7,  # was 10
-              'legend.fontsize': font_scale * 10 if largeFonts else font_scale * 7,  # was 10
-              'xtick.labelsize': font_scale * 10 if largeFonts else font_scale * 7,
-              'ytick.labelsize': font_scale * 10 if largeFonts else font_scale * 7,
+            #   'axes.labelsize': font_scale * 10 if largeFonts else font_scale * 7,
+            #   'axes.titlesize': font_scale * 10 if largeFonts else font_scale * 7,
+            #   'font.size': font_scale * 10 if largeFonts else font_scale * 7,  # was 10
+            #   'legend.fontsize': font_scale * 10 if largeFonts else font_scale * 7,  # was 10
+            #   'xtick.labelsize': font_scale * 10 if largeFonts else font_scale * 7,
+            #   'ytick.labelsize': font_scale * 10 if largeFonts else font_scale * 7,
+              'axes.labelsize': font_size,
+              'axes.titlesize': font_size,
+              'font.size': font_size,  # was 10
+              'legend.fontsize': legend_font_size,  # was 10
+              'legend.title_fontsize': legend_font_size,
+              'xtick.labelsize': font_size,
+              'ytick.labelsize': font_size,
               'text.usetex': True,
-              'figure.figsize': [fig_width, fig_height],
-              'font.family': 'serif',
-              'xtick.minor.size': 0.5,
-              'xtick.major.pad': 1.5,
-              'xtick.major.size': 1,
-              'ytick.minor.size': 0.5,
-              'ytick.major.pad': 1.5,
-              'ytick.major.size': 1,
-              'lines.linewidth': 1.5,
-            #   'lines.markersize': 0.1,
-              'lines.markersize': 8.0,
-              'hatch.linewidth': 0.5
+            #   'figure.figsize': [fig_width, fig_height],
+              'font.family' : 'serif',
+              'font.serif' : 'Computer Modern',
+              'mathtext.fontset' : 'cm'
+            #   'xtick.minor.size': 0.5,
+            #   'xtick.major.pad': 1.5,
+            #   'xtick.major.size': 1,
+            #   'ytick.minor.size': 0.5,
+            #   'ytick.major.pad': 1.5,
+            #   'ytick.major.size': 1,
+            # #   'lines.linewidth': 1.5,
+            # 'lines.linewidth': 1,
+            # #   'lines.markersize': 0.1,
+            #   'lines.markersize': 8.0,
+            #   'hatch.linewidth': 0.5
               }
 
     matplotlib.rcParams.update(params)
