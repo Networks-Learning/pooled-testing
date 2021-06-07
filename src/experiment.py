@@ -9,7 +9,7 @@ import multiprocessing as mp
 def generate_infected_contacts(N, r, k, rng):
     
     p = r/(k+r)
-    num_of_infections = nbinom.rvs(n=k, p=1-p, random_state=rng) # Sample from a negative binomial
+    num_of_infections = nbinom.rvs(n=k, p=1-p, random_state=rng) # Sample from a negative binomial (Refer to numpy documentation reg. 1-p)
 
     while num_of_infections > N:
         num_of_infections = nbinom.rvs(n=k, p=1-p, random_state=rng) # Reject if it is larger than N
