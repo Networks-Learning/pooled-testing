@@ -9,7 +9,7 @@ sp_seq=(0.75 0.95)
 # sp=0.75
 r=2.5
 k=0.1
-seeds=100000
+seeds=1000000
 njobs=1
 
 for z in {0..1}
