@@ -16,7 +16,7 @@ lambda_2=0.0
 for v in {0..1}
 do
     N=${N_seq[$v]}
-    for z in {0..5}
+    for z in {0..9}
     do
         r=${r_seq[$z]}
         for i in {0..9}
