@@ -1,10 +1,14 @@
 #!/bin/bash
 
 N=100
-se=0.95
-sp=0.95
-lambda_1_seq=$(seq 600 700)
-lambda_2_seq=$(seq 0 10 300)
+# se=0.95
+# sp=0.95
+# lambda_1_seq=$(seq 600 700)
+# lambda_2_seq=$(seq 0 3 300)
+se=0.85
+sp=0.85
+lambda_1_seq=$(seq 200 300)
+lambda_2_seq=$(seq 0 2 200)
 # se=0.75
 # sp=0.75
 # lambda_1_seq=$(seq 100 200)
