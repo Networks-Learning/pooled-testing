@@ -416,5 +416,5 @@ if __name__ == '__main__':
     experiment()
     # testing_q_values(N=100, r=2.5, k=0.2)
     # testing_exp_values(N=100, r=2.5, k=0.2, lambda_1=0.0, lambda_2=0.0, se=0.95, sp=0.95, seeds=100000)
-    # experiment(r = 2.5, k = 0.1, n = 50, lambda_1 = 1.8, lambda_2 = 1.6, sp = 0.95, se = 0.95,
-                # method = 'negbin', seeds = 100000, njobs = 1, output = 'outputs/test')
+    # experiment(r = 2.5, k = 0.1, n = 100, lambda_1 = 100.0, lambda_2 = 0.0, sp = 0.75, se = 0.75, #649.0 650.0
+    #             method = 'negbin', seeds = 100000, njobs = 1, output = 'outputs/test')
