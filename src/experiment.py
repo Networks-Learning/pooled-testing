@@ -6,19 +6,21 @@ from joblib import Parallel, delayed
 import json
 import multiprocessing as mp
     
-def generate_infected_contacts(N, r, k, rng):
+def generate_infected_contacts(N, r, k, rng, N_untraced):
     
     p = r/(k+r)
     num_of_infections = nbinom.rvs(n=k, p=1-p, random_state=rng) # Sample from a negative binomial (Refer to numpy documentation reg. 1-p)
 
-    while num_of_infections > N:
+    while num_of_infections > N + N_untraced:
         num_of_infections = nbinom.rvs(n=k, p=1-p, random_state=rng) # Reject if it is larger than N
 
-    is_infected = np.full(N, False)
-    infection_ids = rng.choice(N, size=num_of_infections, replace=False)
+    is_infected = np.full(N + N_untraced, False)
+    infection_ids = rng.choice(N + N_untraced, size=num_of_infections, replace=False)
     is_infected[infection_ids] = True
+
+    is_observed_infected = rng.choice(is_infected, size=N, replace=False)
  
-    return is_infected
+    return is_observed_infected
 
 def evaluate_population(lambda_1, lambda_2, se, sp, d, is_infected, groups, rng):
 
@@ -287,11 +289,11 @@ def testing(lambda_1, lambda_2, se, sp, d, N, method, r=None, k=None, p_bernoull
 
 # Generates infected contacts, performs testing based on the given group sizes
 # and returns the number of tests, false negatives and false positives
-def gen_and_eval_fixed(N, r, k, lambda_1, lambda_2, se, sp, d, groups, seed):
+def gen_and_eval_fixed(N, r, k, lambda_1, lambda_2, se, sp, d, groups, seed, N_untraced):
 
     rng = np.random.default_rng(seed)
     
-    is_infected = generate_infected_contacts(N, r, k, rng)
+    is_infected = generate_infected_contacts(N, r, k, rng, N_untraced)
 
     num_of_infected = np.sum(is_infected)
 
@@ -300,7 +302,7 @@ def gen_and_eval_fixed(N, r, k, lambda_1, lambda_2, se, sp, d, groups, seed):
     return score, num_of_tests, false_negatives, false_positives, num_of_infected
 
 # Saves configuration and results to a JSON file
-def generate_summary(lambda_1, lambda_2, se, sp, d, N, r, k, method, seeds, groups,
+def generate_summary(lambda_1, lambda_2, se, sp, d, N, N_untraced, r, k, method, seeds, groups,
                         exp_fn, exp_fp, exp_tests,
                         score, num_of_tests, false_negatives, false_positives, num_of_infected):
 
@@ -314,6 +316,7 @@ def generate_summary(lambda_1, lambda_2, se, sp, d, N, r, k, method, seeds, grou
     summary['k'] = str(k)
     summary['method'] = method
     summary['N'] = str(N)
+    summary['N_untraced'] = str(N_untraced)
     summary['exp_fn'] = str(exp_fn)
     summary['exp_fp'] = str(exp_fp)
     summary['exp_tests'] = str(exp_tests)
@@ -336,7 +339,8 @@ def generate_summary(lambda_1, lambda_2, se, sp, d, N, r, k, method, seeds, grou
 @click.command() # Comment the click commands for testing
 @click.option('--r', type=float, required=True, help="Reproductive rate")
 @click.option('--k', type=float, required=True, help="Dispersion")
-@click.option('--n', type=int, required=True, help="Number of contacts")
+@click.option('--n', type=int, required=True, help="Number of traced contacts")
+@click.option('--n_untraced', type=int, required=False, default=0, help="Number of untraced contacts")
 @click.option('--lambda_1', type=float, required=True, help="False Negative weight")
 @click.option('--lambda_2', type=float, required=True, help="False Positive weight")
 @click.option('--se', type=np.longdouble, required=True, help="Test Sensitivity")
@@ -346,9 +350,10 @@ def generate_summary(lambda_1, lambda_2, se, sp, d, N, r, k, method, seeds, grou
 @click.option('--seeds', type=int, required=True, help="Number of contacts sets to be tested")
 @click.option('--njobs', type=int, required=True, help="Number of parallel threads")
 @click.option('--output', type=str, required=True, help="Output file name")
-def experiment(r, k, n, lambda_1, lambda_2, se, sp, d, method, seeds, njobs, output):
+def experiment(r, k, n, n_untraced, lambda_1, lambda_2, se, sp, d, method, seeds, njobs, output):
 
     N = n # click doesn't accept upper case arguments
+    N_untraced = n_untraced
 
     if method=='binomial':
         
@@ -373,7 +378,7 @@ def experiment(r, k, n, lambda_1, lambda_2, se, sp, d, method, seeds, njobs, out
         groups, exp_fn, exp_fp, exp_tests = testing(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, d=d, N=N, r=r, k=k, method=method)
 
     print('Evaluating...')
-    results = Parallel(n_jobs=njobs, backend='multiprocessing')(delayed(gen_and_eval_fixed)(N, r, k, lambda_1, lambda_2, se, sp, d, groups, seed) for seed in range(1, seeds+1))
+    results = Parallel(n_jobs=njobs, backend='multiprocessing')(delayed(gen_and_eval_fixed)(N, r, k, lambda_1, lambda_2, se, sp, d, groups, seed, N_untraced) for seed in range(1, seeds+1))
 
     score = [x[0] for x in results]
     num_of_tests = [x[1] for x in results]
@@ -382,7 +387,7 @@ def experiment(r, k, n, lambda_1, lambda_2, se, sp, d, method, seeds, njobs, out
     num_of_infected = [x[4] for x in results]
 
     print('Saving results...')
-    summary = generate_summary(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, d=d, N=N, r=r, k=k, method=method,
+    summary = generate_summary(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, d=d, N=N, N_untraced=N_untraced, r=r, k=k, method=method,
                                 exp_fn=exp_fn, exp_fp=exp_fp, exp_tests=exp_tests,
                                 score=score, num_of_tests=num_of_tests, false_negatives=false_negatives, false_positives=false_positives,
                                 groups=groups, num_of_infected=num_of_infected, seeds=seeds)
@@ -437,5 +442,5 @@ if __name__ == '__main__':
     experiment()
     # testing_q_values(N=100, r=2.5, k=0.2)
     # testing_exp_values(N=100, r=2.5, k=0.2, lambda_1=0.0, lambda_2=0.0, se=0.95, sp=0.95, seeds=100000)
-    # experiment(r = 2.5, k = 0.1, n = 100, lambda_1 = 0.0, lambda_2 = 0.0, se = 0.8, sp = 0.98, d=0.0427,
+    # experiment(r = 2.5, k = 0.1, n = 50, n_untraced=20, lambda_1 = 0.0, lambda_2 = 0.0, se = 0.8, sp = 0.98, d=0.0427,
     #             method = 'negbin', seeds = 100000, njobs = 1, output = 'outputs/test')
