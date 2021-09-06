@@ -1,6 +1,6 @@
 #!/bin/bash
 
-N=(10 20 50 100 200)
+N=(20 50 100 200)
 methods=(binomial negbin)
 se=0.8
 sp=0.98
