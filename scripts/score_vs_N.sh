@@ -1,6 +1,6 @@
 #!/bin/bash
 
-N=(10 20 50 100 200 500)
+N=(10 20 50 100 200)
 methods=(binomial negbin)
 se=0.8
 sp=0.98
@@ -14,7 +14,7 @@ njobs=5
 lambda_1=0.0
 lambda_2=0.0
 
-for i in {0..5}
+for i in {0..4}
 do
     for j in {0..1}
     do 

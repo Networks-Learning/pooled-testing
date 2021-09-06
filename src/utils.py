@@ -36,7 +36,7 @@ def get_fig_dim(width, fraction=1):
     return fig_dim
 
 
-def latexify(font_serif='Computer Modern', mathtext_font='cm', font_size=10, small_font_size=10):
+def latexify(font_serif='Computer Modern', mathtext_font='cm', font_size=10, small_font_size=None):
     """Set up matplotlib's RC params for LaTeX plotting.
     Call this before plotting a figure.
 
@@ -49,6 +49,9 @@ def latexify(font_serif='Computer Modern', mathtext_font='cm', font_size=10, sma
 
     # code adapted from http://www.scipy.org/Cookbook/Matplotlib/LaTeX_Examples
 
+    if small_font_size is None:
+      small_font_size = font_size
+    
     params = {'backend': 'ps',
               'text.latex.preamble': '\\usepackage{gensymb} \\usepackage{bm}',
               # fontsize for x and y labels (was 10)

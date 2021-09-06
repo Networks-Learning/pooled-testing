@@ -415,15 +415,10 @@ def testing_exp_values(N, r, k, lambda_1, lambda_2, se, sp, seeds):
 
     results={}
 
-    effective_infected = []
-    for seed in range(1, seeds+1):
-        rng = np.random.default_rng(seed)
-        num_of_infections = nbinom.rvs(n=k, p=1-(r/(k+r)), random_state=rng) # Sample from a negative binomial
-        while num_of_infections > N:
-            num_of_infections = nbinom.rvs(n=k, p=1-(r/(k+r)), random_state=rng) # Reject if it is larger than N
-        effective_infected.append(num_of_infections)
-
-    effective_mean = np.mean(effective_infected)
+    effective_mean = 0
+    for n in range(0,N+1):
+        effective_mean += n * compute_q_value(n, r, N, 'negbin', k)
+    
     p_bernoulli = effective_mean/N
 
     for method in ['binomial', 'negbin']:
