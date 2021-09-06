@@ -302,7 +302,7 @@ def gen_and_eval_fixed(N, r, k, lambda_1, lambda_2, se, sp, d, groups, seed, N_u
     return score, num_of_tests, false_negatives, false_positives, num_of_infected
 
 # Saves configuration and results to a JSON file
-def generate_summary(lambda_1, lambda_2, se, sp, d, N, N_untraced, r, k, method, seeds, groups,
+def generate_summary(lambda_1, lambda_2, se, sp, d, N, untraced, r, k, method, seeds, groups,
                         exp_fn, exp_fp, exp_tests,
                         score, num_of_tests, false_negatives, false_positives, num_of_infected):
 
@@ -316,7 +316,7 @@ def generate_summary(lambda_1, lambda_2, se, sp, d, N, N_untraced, r, k, method,
     summary['k'] = str(k)
     summary['method'] = method
     summary['N'] = str(N)
-    summary['N_untraced'] = str(N_untraced)
+    summary['untraced'] = str(untraced)
     summary['exp_fn'] = str(exp_fn)
     summary['exp_fp'] = str(exp_fp)
     summary['exp_tests'] = str(exp_tests)
@@ -387,7 +387,7 @@ def experiment(r, k, n, untraced, lambda_1, lambda_2, se, sp, d, method, seeds, 
     num_of_infected = [x[4] for x in results]
 
     print('Saving results...')
-    summary = generate_summary(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, d=d, N=N, N_untraced=N_untraced, r=r, k=k, method=method,
+    summary = generate_summary(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, d=d, N=N, untraced=untraced, r=r, k=k, method=method,
                                 exp_fn=exp_fn, exp_fp=exp_fp, exp_tests=exp_tests,
                                 score=score, num_of_tests=num_of_tests, false_negatives=false_negatives, false_positives=false_positives,
                                 groups=groups, num_of_infected=num_of_infected, seeds=seeds)
