@@ -7,7 +7,7 @@ sp=0.98
 d=0.0427
 r=2.5
 k=0.1
-seeds=100000
+seeds=10000
 njobs=5
 
 # Optimizing Tests

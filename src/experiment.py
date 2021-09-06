@@ -340,7 +340,7 @@ def generate_summary(lambda_1, lambda_2, se, sp, d, N, N_untraced, r, k, method,
 @click.option('--r', type=float, required=True, help="Reproductive rate")
 @click.option('--k', type=float, required=True, help="Dispersion")
 @click.option('--n', type=int, required=True, help="Number of traced contacts")
-@click.option('--n_untraced', type=int, required=False, default=0, help="Number of untraced contacts")
+@click.option('--untraced', type=float, required=False, default=0.0, help="Percentage of total contacts who are untraced")
 @click.option('--lambda_1', type=float, required=True, help="False Negative weight")
 @click.option('--lambda_2', type=float, required=True, help="False Positive weight")
 @click.option('--se', type=np.longdouble, required=True, help="Test Sensitivity")
@@ -350,10 +350,10 @@ def generate_summary(lambda_1, lambda_2, se, sp, d, N, N_untraced, r, k, method,
 @click.option('--seeds', type=int, required=True, help="Number of contacts sets to be tested")
 @click.option('--njobs', type=int, required=True, help="Number of parallel threads")
 @click.option('--output', type=str, required=True, help="Output file name")
-def experiment(r, k, n, n_untraced, lambda_1, lambda_2, se, sp, d, method, seeds, njobs, output):
+def experiment(r, k, n, untraced, lambda_1, lambda_2, se, sp, d, method, seeds, njobs, output):
 
     N = n # click doesn't accept upper case arguments
-    N_untraced = n_untraced
+    N_untraced = int(np.around(untraced*N / (1-untraced)))
 
     if method=='binomial':
         
