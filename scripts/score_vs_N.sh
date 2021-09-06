@@ -14,7 +14,7 @@ njobs=5
 lambda_1=0.0
 lambda_2=0.0
 
-for i in {0..4}
+for i in {0..3}
 do
     for j in {0..1}
     do 
