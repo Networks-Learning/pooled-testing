@@ -1,6 +1,6 @@
 #!/bin/bash
 
-N=50
+N=100
 se_seq=(0.7 0.8 0.9)
 sp_seq=(0.97 0.98 0.99)
 lambda_1_seq=$(seq 0 100)
