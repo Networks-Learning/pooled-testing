@@ -14,7 +14,7 @@ njobs=1
 lambda_1=0.0
 lambda_2=0.0
 
-for z in {0..20}
+for z in {0..40}
 do
     d=${d_seq[$z]}
     for j in {0..1}
