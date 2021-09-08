@@ -122,7 +122,6 @@ def compute_num_of_tests(size, se, sp, d, method, inner_sums=None, p_bernoulli=N
 
             double_sum = np.longdouble(0)
             for s in range(1, size+1):
-                #double_sum += (1-se) * inner_sums[s]
                 double_sum += (sp - (se+sp-1) * np.power(s/size, d)) * inner_sums[s]
 
             assert double_sum>=0 and double_sum<=1, "Double sum out of bounds"
@@ -137,7 +136,7 @@ def compute_num_of_tests(size, se, sp, d, method, inner_sums=None, p_bernoulli=N
 
             double_sum = np.longdouble(0)
             for s in range(1, size+1):
-                double_sum += (sp - (se+sp-1) * np.power(s/size, d)) * (comb(size, s) * np.power(p_bernoulli, s) * np.power(1-p_bernoulli, size-s)) # TODO: Check this again
+                double_sum += (sp - (se+sp-1) * np.power(s/size, d)) * (comb(size, s) * np.power(p_bernoulli, s) * np.power(1-p_bernoulli, size-s))
             
             assert double_sum>=0 and double_sum<=1, "Double sum out of bounds"
             result = 1 + size * (1 - double_sum - sp*np.power(1-p_bernoulli, size))
@@ -160,7 +159,6 @@ def compute_false_negatives(size, se, sp, d, method, r=None, k=None, N=None, inn
 
             double_sum = np.longdouble(0)
             for s in range(1, size+1):
-                # double_sum += s * (1-se**2) * inner_sums[s]
                 double_sum += s * (1 - se + se*(sp - (se+sp-1)*np.power(s/size,d))) * inner_sums[s]
 
             result = double_sum
@@ -174,12 +172,9 @@ def compute_false_negatives(size, se, sp, d, method, r=None, k=None, N=None, inn
 
             double_sum = np.longdouble(0)
             for s in range(1, size+1):
-                # double_sum += s * (1-se**2) * inner_sums[s]
                 double_sum += s * (1 - se + se*(sp - (se+sp-1)*np.power(s/size,d))) * (comb(size, s) * np.power(p_bernoulli, s) * np.power(1-p_bernoulli, size-s))
 
             result = double_sum
-
-            # result = (1-se**2) * p_bernoulli * size
 
     return result
 
@@ -216,8 +211,6 @@ def compute_false_positives(size, se, sp, d, method, r=None, k=None, N=None, inn
                 double_sum += (1 - sp + (se+sp-1) * np.power(s/size, d)) * (size-s) * (1-sp) * (comb(size, s) * np.power(p_bernoulli, s) * np.power(1-p_bernoulli, size-s))
 
             result = (1-sp)**2 * size * np.power(1-p_bernoulli, size) + double_sum
-
-            # result = (1-sp)*se*size*(1-p_bernoulli) - size*(1-sp)*(se+sp-1)*(1-p_bernoulli)**size
 
     return result
 
@@ -437,5 +430,5 @@ if __name__ == '__main__':
     experiment()
     # testing_q_values(N=100, r=2.5, k=0.2)
     # testing_exp_values(N=100, r=2.5, k=0.2, lambda_1=0.0, lambda_2=0.0, se=0.95, sp=0.95, seeds=100000)
-    # experiment(r = 2.5, k = 0.1, n = 50, n_untraced=20, lambda_1 = 0.0, lambda_2 = 0.0, se = 0.8, sp = 0.98, d=0.0427,
-    #             method = 'negbin', seeds = 100000, njobs = 1, output = 'outputs/test')
+    # experiment(r = 2.5, k = 0.1, n = 50, untraced=0.0, lambda_1 = 0.0, lambda_2 = 0.0, se = 0.8, sp = 0.98, d=0.3,
+    #             method = 'negbin', seeds = 10000, njobs = 1, output = 'outputs/test')
