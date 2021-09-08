@@ -8,7 +8,7 @@ N=50
 d_seq=$(seq 0.00 0.05 1.0)
 r_seq=$(seq 0.05 0.05 1.0)
 k=0.1
-seeds=20000
+seeds=10000
 njobs=1
 
 # Optimizing Tests
