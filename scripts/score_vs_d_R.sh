@@ -4,10 +4,11 @@ methods=(binomial negbin)
 se=0.8
 sp=0.98
 N=50
-d_seq=$(seq 0.0 0.01 1.0)
+# d_seq=$(seq 0.0 0.01 1.0)
+d_seq=$(seq 0.00 0.05 1.0)
 r_seq=$(seq 0.25 0.05 5.0)
 k=0.1
-seeds=10000
+seeds=20000
 njobs=1
 
 # Optimizing Tests
