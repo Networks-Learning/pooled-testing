@@ -295,7 +295,7 @@ def gen_and_eval_fixed(N, r, k, lambda_1, lambda_2, se, sp, d, groups, seed, N_u
     return score, num_of_tests, false_negatives, false_positives, num_of_infected
 
 # Saves configuration and results to a JSON file
-def generate_summary(lambda_1, lambda_2, se, sp, d, N, untraced, r, k, method, seeds, groups,
+def generate_summary(lambda_1, lambda_2, se, sp, d, N, untraced, bench, r, k, method, seeds, groups,
                         exp_fn, exp_fp, exp_tests,
                         score, num_of_tests, false_negatives, false_positives, num_of_infected):
 
@@ -307,6 +307,7 @@ def generate_summary(lambda_1, lambda_2, se, sp, d, N, untraced, r, k, method, s
     summary['d'] = str(d)
     summary['r'] = str(r)
     summary['k'] = str(k)
+    summary['bench'] = bench
     summary['method'] = method
     summary['N'] = str(N)
     summary['untraced'] = str(untraced)
@@ -334,6 +335,7 @@ def generate_summary(lambda_1, lambda_2, se, sp, d, N, untraced, r, k, method, s
 @click.option('--k', type=float, required=True, help="Dispersion")
 @click.option('--n', type=int, required=True, help="Number of traced contacts")
 @click.option('--untraced', type=float, required=False, default=0.0, help="Percentage of total contacts who are untraced")
+@click.option('--bench', is_flag=True, help="Used to benchmark a method with untraced contacts against its ideal performance")
 @click.option('--lambda_1', type=float, required=True, help="False Negative weight")
 @click.option('--lambda_2', type=float, required=True, help="False Positive weight")
 @click.option('--se', type=np.longdouble, required=True, help="Test Sensitivity")
@@ -343,17 +345,22 @@ def generate_summary(lambda_1, lambda_2, se, sp, d, N, untraced, r, k, method, s
 @click.option('--seeds', type=int, required=True, help="Number of contacts sets to be tested")
 @click.option('--njobs', type=int, required=True, help="Number of parallel threads")
 @click.option('--output', type=str, required=True, help="Output file name")
-def experiment(r, k, n, untraced, lambda_1, lambda_2, se, sp, d, method, seeds, njobs, output):
+def experiment(r, k, n, untraced, bench, lambda_1, lambda_2, se, sp, d, method, seeds, njobs, output):
 
-    N = n # click doesn't accept upper case arguments
-    N_untraced = int(np.around(untraced*N / (1-untraced)))
+    if bench:
+        N_untraced = int(np.around(untraced*n / (1-untraced)))
+        N = n + N_untraced
+        N_untraced = 0
+    else:
+        N = n # click doesn't accept upper case arguments
+        N_untraced = int(np.around(untraced*N / (1-untraced)))
 
     if method=='binomial':
         
         # Estimate the probability of infection for the Binomial giving the same expected number of infected as the Generalized Negative Binomial
         effective_mean = 0
-        for n in range(0,N+1):
-            effective_mean += n * compute_q_value(n, r, N, 'negbin', k)
+        for l in range(0,N+1):
+            effective_mean += l * compute_q_value(l, r, N, 'negbin', k)
         
         p_bernoulli = effective_mean/N
 
@@ -380,7 +387,7 @@ def experiment(r, k, n, untraced, lambda_1, lambda_2, se, sp, d, method, seeds, 
     num_of_infected = [x[4] for x in results]
 
     print('Saving results...')
-    summary = generate_summary(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, d=d, N=N, untraced=untraced, r=r, k=k, method=method,
+    summary = generate_summary(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, d=d, N=n, untraced=untraced, bench=bench, r=r, k=k, method=method,
                                 exp_fn=exp_fn, exp_fp=exp_fp, exp_tests=exp_tests,
                                 score=score, num_of_tests=num_of_tests, false_negatives=false_negatives, false_positives=false_positives,
                                 groups=groups, num_of_infected=num_of_infected, seeds=seeds)
@@ -430,5 +437,5 @@ if __name__ == '__main__':
     experiment()
     # testing_q_values(N=100, r=2.5, k=0.2)
     # testing_exp_values(N=100, r=2.5, k=0.2, lambda_1=0.0, lambda_2=0.0, se=0.95, sp=0.95, seeds=100000)
-    # experiment(r = 2.5, k = 0.1, n = 50, untraced=0.0, lambda_1 = 0.0, lambda_2 = 0.0, se = 0.8, sp = 0.98, d=0.3,
-    #             method = 'negbin', seeds = 10000, njobs = 1, output = 'outputs/test')
+    # experiment(r = 2.5, k = 0.1, n = 50, untraced=0.2, bench=False, lambda_1 = 0.0, lambda_2 = 0.0, se = 0.8, sp = 0.98, d=0.0427,
+    #             method = 'binomial', seeds = 10000, njobs = 1, output = 'outputs/test')

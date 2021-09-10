@@ -7,7 +7,7 @@ lambda_1_seq=$(seq 0 100)
 lambda_2_seq=$(seq 0 100)
 r=2.5
 k=0.1
-d=0.0427
+d=0.0455
 seeds=10000
 njobs=1
 for i in {0..2}
