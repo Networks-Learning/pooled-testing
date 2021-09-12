@@ -267,7 +267,8 @@ def testing(lambda_1, lambda_2, se, sp, r, k, d, N, N_untraced, bench, method):
     for size in range(1, N+1):
         g_fun[size-1], fn_fun[size-1], fp_fun[size-1], tests_fun[size-1] = \
             group_score(size=size, lambda_1=lambda_1, lambda_2=lambda_2,
-                        se=se, sp=sp, d=d, r=r, k=k, N=N, p_bernoulli=p_bernoulli, method=method)
+                        se=se, sp=sp, d=d, r=r, k=k, N=N, p_bernoulli=p_bernoulli, method=method,
+                        probs_of_infected_in_traced=probs_of_infected_in_traced)
 
     # Dynamic programming
     h_fun = np.zeros(N+1)
