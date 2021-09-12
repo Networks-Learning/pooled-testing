@@ -96,15 +96,25 @@ def compute_q_value(n, r, N, method, k=None):
     assert result>=0 and result<=1, "Q value out of bounds"
     return result
 
-def compute_inner_sums(size, r, N, method, k=None):
+def compute_probs_of_infected_in_traced(r, N, N_untraced, method, k=None):
+    
+    probs = np.zeros(N+1, dtype=np.longdouble)    
+    for n in range(0, N+1):
+        for t in range(0, N+N_untraced+1):
+            probs[n] += (comb(t, n)*comb(N+N_untraced-t, N-n)/comb(N+N_untraced, N)) * compute_q_value(n=t, r=r, N=N+N_untraced, method=method, k=k)
+        assert probs[n]>=0 and probs[n]<=1, "Not a valid probability"
+
+    return probs
+
+def compute_inner_sums(size, N, probs_of_infected_in_traced):
     
     sum_array = np.zeros(N+1, dtype=np.longdouble)
     for s in range(0, size+1):
         
         inner_sum = 0
         for n in range(s, N+1):
-            inner_sum += (comb(n, s)*comb(N-n, size-s)/comb(N, size)) * compute_q_value(n=n, r=r, N=N, method=method, k=k)
-
+            inner_sum += (comb(n, s)*comb(N-n, size-s)/comb(N, size)) * probs_of_infected_in_traced[n]
+        
         assert inner_sum>=0 and inner_sum<=1, "Inner sum out of bounds"
         sum_array[s] = inner_sum
 
@@ -216,10 +226,10 @@ def compute_false_positives(size, se, sp, d, method, r=None, k=None, N=None, inn
 
 # Computes the expected tests, expected false negatives & expected false positives
 # for a given group size
-def group_score(size, lambda_1, lambda_2, se, sp, d, method, r=None, k=None, N=None, p_bernoulli=None):
+def group_score(size, lambda_1, lambda_2, se, sp, d, method, probs_of_infected_in_traced, r=None, k=None, N=None, p_bernoulli=None):
 
     if method == 'negbin' or method == 'poisson':
-        inner_sums = compute_inner_sums(size=size, r=r, k=k, N=N, method=method)
+        inner_sums = compute_inner_sums(size=size, N=N, probs_of_infected_in_traced=probs_of_infected_in_traced)
     else:
         inner_sums = None
     
@@ -232,12 +242,23 @@ def group_score(size, lambda_1, lambda_2, se, sp, d, method, r=None, k=None, N=N
     return score, expected_false_negatives, expected_false_positives, expected_num_of_tests
 
 # Dynamic programming algorithm to split individuals into groups
-def testing(lambda_1, lambda_2, se, sp, d, N, method, r=None, k=None, p_bernoulli=None):
+def testing(lambda_1, lambda_2, se, sp, r, k, d, N, N_untraced, bench, method):
 
     if (method != 'negbin') and (method != 'binomial') and (method != 'poisson'):
         print('Unspecified method')
         return None
     
+    # Precompute the probabilities of having n infected samples in N contacts
+    if bench:
+        probs_of_infected_in_traced = compute_probs_of_infected_in_traced(r=r, N=N, N_untraced=N_untraced, method='negbin', k=k)
+    else:
+        probs_of_infected_in_traced = compute_probs_of_infected_in_traced(r=r, N=N, N_untraced=0, method='negbin', k=k)
+    
+    effective_mean = 0
+    for l in range(0,N+1):
+        effective_mean += l * probs_of_infected_in_traced[l]
+    p_bernoulli = effective_mean/N
+
     # Precompute the objective value for all group sizes
     g_fun = np.zeros(N)
     fn_fun = np.zeros(N)
@@ -347,35 +368,19 @@ def generate_summary(lambda_1, lambda_2, se, sp, d, N, untraced, bench, r, k, me
 @click.option('--output', type=str, required=True, help="Output file name")
 def experiment(r, k, n, untraced, bench, lambda_1, lambda_2, se, sp, d, method, seeds, njobs, output):
 
-    if bench:
-        N_untraced = int(np.around(untraced*n / (1-untraced)))
-        N = n + N_untraced
-        N_untraced = 0
-    else:
-        N = n # click doesn't accept upper case arguments
-        N_untraced = int(np.around(untraced*N / (1-untraced)))
+    N = n # click doesn't accept upper case arguments
+    N_untraced = int(np.around(untraced*N / (1-untraced)))
 
-    if method=='binomial':
+    if method!='individual':
         
-        # Estimate the probability of infection for the Binomial giving the same expected number of infected as the Generalized Negative Binomial
-        effective_mean = 0
-        for l in range(0,N+1):
-            effective_mean += l * compute_q_value(l, r, N, 'negbin', k)
-        
-        p_bernoulli = effective_mean/N
-
         print('Computing optimal groups under ' + method + ' assumption...')
-        groups, exp_fn, exp_fp, exp_tests = testing(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, d=d, N=N, method=method, p_bernoulli=p_bernoulli)
+        groups, exp_fn, exp_fp, exp_tests = testing(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, r=r, k=k, d=d, N=N, N_untraced=N_untraced, bench=bench, method=method)
 
-    elif method == 'individual':
+    else:
 
         print('Computing optimal groups under ' + method + ' assumption...')
         groups, exp_fn, exp_fp, exp_tests = (list(np.full(N,1,dtype=int)), None, None, None) # Expected numbers left undefined for individual testing
 
-    else:
-
-        print('Computing optimal groups under ' + method + ' assumption...')
-        groups, exp_fn, exp_fp, exp_tests = testing(lambda_1=lambda_1, lambda_2=lambda_2, se=se, sp=sp, d=d, N=N, r=r, k=k, method=method)
 
     print('Evaluating...')
     results = Parallel(n_jobs=njobs, backend='multiprocessing')(delayed(gen_and_eval_fixed)(N, r, k, lambda_1, lambda_2, se, sp, d, groups, seed, N_untraced) for seed in range(1, seeds+1))
@@ -437,5 +442,5 @@ if __name__ == '__main__':
     experiment()
     # testing_q_values(N=100, r=2.5, k=0.2)
     # testing_exp_values(N=100, r=2.5, k=0.2, lambda_1=0.0, lambda_2=0.0, se=0.95, sp=0.95, seeds=100000)
-    # experiment(r = 2.5, k = 0.1, n = 50, untraced=0.2, bench=False, lambda_1 = 0.0, lambda_2 = 0.0, se = 0.8, sp = 0.98, d=0.0427,
-    #             method = 'binomial', seeds = 10000, njobs = 1, output = 'outputs/test')
+    # experiment(r = 2.5, k = 0.1, n = 100, untraced=0.0, bench=False, lambda_1 = 0.0, lambda_2 = 0.0, se = 0.8, sp = 0.98, d=0.0455,
+    #             method = 'negbin', seeds = 10000, njobs = 1, output = 'outputs/test')

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 N=100
-se_seq=(0.7 0.8 0.9)
-sp_seq=(0.97 0.98 0.99)
+se_seq=(0.7 0.8 0.9 0.99)
+sp_seq=(0.97 0.98 0.99 0.99)
 lambda_1_seq=$(seq 0 100)
 lambda_2_seq=$(seq 0 100)
 r=2.5
@@ -10,7 +10,7 @@ k=0.1
 d=0.0455
 seeds=10000
 njobs=1
-for i in {0..2}
+for i in {0..3}
 do
     se=${se_seq[$i]}
     sp=${sp_seq[$i]}
