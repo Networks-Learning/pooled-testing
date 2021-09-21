@@ -6,3 +6,4 @@ click
 pandas
 scipy
 joblib
+python-docx
