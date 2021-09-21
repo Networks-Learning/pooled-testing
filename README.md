@@ -1,1 +1,1 @@
-# Group Testing in the Presence of Superspreaders
+# Pooled Testing of Traced Contacts Under Superspreading Dynamics
