@@ -57,7 +57,6 @@ def evaluate_population(lambda_1, lambda_2, se, sp, d, is_infected, groups, rng)
             group_is_infected = is_infected[examined : examined+group_size]
             num_of_infected = np.sum(group_is_infected)
 
-            # if (num_of_infected > 0 and rng.binomial(1, se)==1) or (num_of_infected == 0 and rng.binomial(1, sp)==0):
             if (num_of_infected > 0 and rng.binomial(1, 1-sp+(se+sp-1)*np.power(num_of_infected/group_size, d))==1) or (num_of_infected == 0 and rng.binomial(1, sp)==0):
             # Group test positive
                 group_tests = 1+group_size
@@ -403,7 +402,7 @@ def experiment(r, k, n, untraced, bench, lambda_1, lambda_2, se, sp, d, method, 
 
     return
 
-# Temporary function to compare the q-values of Poisson and Negative Binomial 
+# Testing function to compare the q-values of Poisson and Negative Binomial 
 def testing_q_values(N, r, k):
     
     poisson_q_values = []
@@ -416,7 +415,7 @@ def testing_q_values(N, r, k):
     print(negbin_q_values)  
     return
     
-# Temporary function to compare the expected number of tests, FNs and FPs of Poisson and Negative Binomial
+# Testing function to compare the expected number of tests, FNs and FPs of Poisson and Negative Binomial
 def testing_exp_values(N, r, k, lambda_1, lambda_2, se, sp, seeds):
 
     results={}
