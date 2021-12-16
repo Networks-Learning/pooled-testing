@@ -1,6 +1,6 @@
 # Pooled Testing of Traced Contacts Under Superspreading Dynamics
 
-This repository contains the code used in the paper Pooled Testing of Traced Contacts Under Superspreading Dynamics (currently under review). A preliminary version of it is available on [arXiv](https://arxiv.org/abs/2106.15988).
+This repository contains the code used in the paper *Pooled Testing of Traced Contacts Under Superspreading Dynamics* (currently under review). A preliminary version of it is available on [arXiv](https://arxiv.org/abs/2106.15988).
 
 ## Dependencies
 
