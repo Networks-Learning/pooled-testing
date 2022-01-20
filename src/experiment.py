@@ -277,7 +277,7 @@ def testing(lambda_1, lambda_2, se, sp, r, k, d, N, N_untraced, bench, method):
     tests_total = np.zeros(N+1)
     for i in range(1, N+1):
         
-        min_val = 3*N
+        min_val = np.inf
         for j in range(1, i+1):
             val = g_fun[j-1] + h_fun[i-j]
             if val < min_val:
@@ -442,5 +442,5 @@ if __name__ == '__main__':
     experiment()
     # testing_q_values(N=100, r=2.5, k=0.2)
     # testing_exp_values(N=100, r=2.5, k=0.2, lambda_1=0.0, lambda_2=0.0, se=0.95, sp=0.95, seeds=100000)
-    # experiment(r = 2.5, k = 0.1, n = 100, untraced=0.0, bench=False, lambda_1 = 0.0, lambda_2 = 0.0, se = 0.8, sp = 0.98, d=0.0455,
-    #             method = 'negbin', seeds = 10000, njobs = 1, output = 'outputs/test')
+    # experiment(r = 2.5, k = 0.1, n = 50, untraced=0.0, bench=False, lambda_1 = 0.0, lambda_2 = 10000.0, se = 0.8, sp = 0.98, d=0.0455,
+    #             method = 'binomial', seeds = 10000, njobs = 1, output = 'outputs/test')
