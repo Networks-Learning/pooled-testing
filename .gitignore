@@ -142,3 +142,8 @@ outputs/*json
 
 # Ignore the figures
 figures/*pdf
+figures/*png
+figures/*tif
+
+# Ignore the backups
+backup*

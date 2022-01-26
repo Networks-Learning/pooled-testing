@@ -36,7 +36,7 @@ def get_fig_dim(width, fraction=1):
     return fig_dim
 
 
-def latexify(font_serif='Computer Modern', mathtext_font='cm', font_size=10, small_font_size=None):
+def latexify(font_serif='Computer Modern', mathtext_font='cm', font_size=10, small_font_size=None, usetex=True):
     """Set up matplotlib's RC params for LaTeX plotting.
     Call this before plotting a figure.
 
@@ -68,11 +68,11 @@ def latexify(font_serif='Computer Modern', mathtext_font='cm', font_size=10, sma
               'legend.title_fontsize': small_font_size,
               'xtick.labelsize': small_font_size,
               'ytick.labelsize': small_font_size,
-              'text.usetex': True,
+              'text.usetex': usetex,
             #   'figure.figsize': [fig_width, fig_height],
               'font.family' : 'serif',
-              'font.serif' : 'Computer Modern',
-              'mathtext.fontset' : 'cm'
+              'font.serif' : font_serif,
+              'mathtext.fontset' : mathtext_font
             #   'xtick.minor.size': 0.5,
             #   'xtick.major.pad': 1.5,
             #   'xtick.major.size': 1,
