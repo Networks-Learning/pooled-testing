@@ -30,8 +30,8 @@ The directory [temp-outputs](temp-outputs/) is used for saving intermediate outp
 
 If you use parts of the code in this repository for your own research, please consider citing:
 
-    @article{tsirtsis2021group,
-        title={Group Testing under Superspreading Dynamics},
+    @article{tsirtsis2022group,
+        title={Pooled Testing of Traced Contacts Under Superspreading Dynamics},
         author={Tsirtsis, Stratis and De, Abir and Lorch, Lars and Gomez-Rodriguez, Manuel},
         journal={PLOS Computational Biology},
         year={2022}
